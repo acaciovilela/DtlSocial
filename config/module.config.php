@@ -121,7 +121,7 @@ return [
                 'route' => 'dtl-admin',
                 'pages' => [
                     [
-                        'label' => 'Redes Sociais',
+                        'label' => 'Contas',
                         'route' => 'dtl-admin/dtl-social',
                         'pages' => [
                             [
@@ -135,7 +135,7 @@ return [
         ],
         'admin' => [
             [
-                'label' => 'Redes Sociais',
+                'label' => 'Contas',
                 'route' => 'dtl-admin/dtl-social'
             ],
         ],

@@ -7,6 +7,7 @@ use Laminas\ServiceManager\ServiceManager;
 use DtlSocial\Entity\Facebook as FacebookEntity;
 use DtlSocial\Authentication\Adapters\FacebookAdapter;
 use DtlAuth\Service\OAuth2Service;
+use Laminas\Http\Response;
 
 class Facebook {
 
@@ -127,6 +128,30 @@ class Facebook {
         $response = $this->getRequest()->request($uri, 'GET', $params);
         return $this->getRequest()->getJsonDecode($response);
     }
+    
+    /**
+     * 
+     * @param FacebookEntity $facebook
+     * @return boolean|FacebookEntity
+     */
+    public function refreshToken(FacebookEntity $facebook) {
+        if (isset($facebook) && ($facebook instanceof FacebookEntity)) {
+            $sm = $this->getServiceManager();
+            $oauthService = new OAuth2Service($sm->get(FacebookAdapter::class));
+            $refresh = $oauthService->getRefreshToken($facebook->getAccessToken());
+            if (key_exists('access_token', $refresh)) {
+                $facebook->setAccessToken($refresh['access_token']);
+                $facebook->setExpiresIn($refresh['expires_in']);
+                $facebook->setTokenType($refresh['token_type']);
+                $em = $sm->get(\Doctrine\ORM\EntityManager::class);
+                $em->persist($facebook);
+                $em->flush();
+                return $facebook;
+            }
+            return false;
+        }
+        return false;
+    }
 
     /**
      * Get User profile information
@@ -138,9 +163,23 @@ class Facebook {
         $uri .= '?fields=id,name,email,accounts,picture';
         $uri .= '&access_token=' . $facebook->getAccessToken();
         $response = $this->getRequest()->request($uri);
+        if (!$response->isSuccess()) {
+            switch ($response->getStatusCode()) {
+                case 401:
+                    $refresh = $this->refreshToken($response, $facebook);
+                    if ($refresh instanceof FacebookEntity) {
+                        return $this->getProfile($refresh);
+                    }
+                    return $this->errorHandler($response);
+            }
+        }
         return $this->getRequest()->getJsonDecode($response);
     }
-
+    
+    private function errorHandler(Response $response) {
+        throw new \Exception($response->getReasonPhrase());
+    }
+    
     public function getConfigs() {
         return $this->configs;
     }

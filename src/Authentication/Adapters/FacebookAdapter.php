@@ -66,43 +66,8 @@ class FacebookAdapter extends OAuth2AdapterAbstract implements OAuth2AdapterInte
     public function getAccessTokenUri() {
 
         $uri = self::API_BASE_URI . $this->configs['api_version'] . self::API_ACCESS_TOKEN_PATH;
-        
+
         return $this->formatUri($uri);
-    }
-
-    /**
-     * 
-     * @return string
-     */
-    public function getResponseType() {
-        return self::RESPONSE_TYPE;
-    }
-
-    /**
-     * 
-     * @param string $key
-     * @return string
-     */
-    public function getClientId(string $key) {
-        return $this->getConfigByKey($key);
-    }
-
-    /**
-     * 
-     * @param string $key
-     * @return string
-     */
-    public function getClientSecret(string $key) {
-        return $this->getConfigByKey($key);
-    }
-
-    /**
-     * 
-     * @param string $key
-     * @return string
-     */
-    public function getRedirectUri(string $key) {
-        return $this->getConfigByKey($key);
     }
 
     /**
@@ -111,8 +76,8 @@ class FacebookAdapter extends OAuth2AdapterAbstract implements OAuth2AdapterInte
      */
     public function getAuthorizeParameters() {
         $params = [];
-        $params['client_id'] = $this->getClientId('client_id');
-        $params['redirect_uri'] = $this->getRedirectUri('redirect_uri');
+        $params['client_id'] = $this->getConfigByKey('client_id');
+        $params['redirect_uri'] = $this->getConfigByKey('redirect_uri');
         $params['response_type'] = $this->getResponseType();
         if (!empty($this->getScopes())) {
             $params['scope'] = $this->getScopes();
@@ -127,11 +92,33 @@ class FacebookAdapter extends OAuth2AdapterAbstract implements OAuth2AdapterInte
      */
     public function getAccessTokenParameters(string $code) {
         $params = [];
-        $params['client_id'] = $this->getClientId('client_id');
-        $params['client_secret'] = $this->getClientId('client_secret');
-        $params['redirect_uri'] = $this->getRedirectUri('redirect_uri');
+        $params['client_id'] = $this->getConfigByKey('client_id');
+        $params['client_secret'] = $this->getConfigByKey('client_secret');
+        $params['redirect_uri'] = $this->getConfigByKey('redirect_uri');
         $params['code'] = $code;
         return $params;
+    }
+
+    /**
+     * 
+     * @param string $token
+     * @return array
+     */
+    public function getRefreshTokenParameters(string $token) {
+        $params = [];
+        $params['grant_type'] = 'fb_exchange_token';
+        $params['client_id'] = $this->getConfigByKey('client_id');
+        $params['client_secret'] = $this->getConfigByKey('client_secret');
+        $params['fb_exchange_token'] = $token;
+        return $params;
+    }
+
+    /**
+     * 
+     * @return string
+     */
+    public function getResponseType() {
+        return self::RESPONSE_TYPE;
     }
 
     /**
