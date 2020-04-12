@@ -28,4 +28,33 @@
             </div>
         <?php endif; ?>
     </div>
+    <div class="col mb-2 mx-auto">
+        <?php if ($this->google): ?>
+            <div class="card">
+                <h5 class="card-header">
+                    <i class="fab fa-google"></i> Google
+                </h5>
+                <div class="card-body">
+                    <img src="<?= $this->google['picture']; ?>" width="50px" class="card-img-top"/>
+                </div>
+                <div class="card-footer">
+                    <a href="<?=$this->url('dtl-admin/dtl-social/google');?>" class="btn btn-block btn-info">
+                        Ver Perfil
+                    </a>    
+                    <a href="<?=$this->url('dtl-admin/dtl-social/google/disconnect');?>" class="btn btn-block btn-warning">
+                        Desconectar
+                    </a>    
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="card">
+                <h5 class="card-header">
+                    <i class="fab fa-google"></i> Google
+                </h5>
+                <div class="card-body">
+                    <?php echo $this->googleSignInBtn()->render(); ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
 </div>

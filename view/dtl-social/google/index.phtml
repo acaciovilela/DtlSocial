@@ -1,0 +1,31 @@
+<?php if ($this->profile): ?>
+    <div class="card">
+        <div class="card-header">
+            Conta do Google
+            <a href="<?=$this->url('dtl-admin/dtl-social/google/disconnect');?>" class="btn btn-outline-secondary float-right">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="media">
+                <img src="<?= $this->profile['picture']; ?>" height="100px" class="thumbnail mr-3"/>
+                <div class="media-body">
+                    <dl>
+                        <dt>Nome:</dt>
+                        <dd><?= $this->profile['name']; ?></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php else: ?>
+    <div class="row row-cols-1 row-cols-md-4">
+        <div class="col mb-2 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <?php echo $this->googleSignInBtn()->render(); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>

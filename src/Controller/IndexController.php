@@ -12,7 +12,9 @@ use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 use Doctrine\ORM\EntityManager;
 use DtlSocial\Entity\Facebook as FacebookEntity;
+use DtlSocial\Entity\Google as GoogleEntity;
 use DtlSocial\Service\Social\Facebook;
+use DtlSocial\Service\Social\Google;
 
 class IndexController extends AbstractActionController {
 
@@ -37,10 +39,22 @@ class IndexController extends AbstractActionController {
             $fbService = $sm->get(Facebook::class);
             $fbProfile = $fbService->getProfile($facebook);
         }
+        
+        /**
+         * Google
+         */
+        $google = $this->getEntityManager()->getRepository(GoogleEntity::class)
+                ->findOneBy(['user' => $user]);
+        $gProfile = null;
+        if ($google) {
+            $gService = $sm->get(Google::class);
+            $gProfile = $gService->getProfile($google);
+        }
 
 
         return new ViewModel([
             'facebook' => $fbProfile,
+            'google' => $gProfile,
         ]);
     }
 
