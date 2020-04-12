@@ -1,8 +1,28 @@
-<?php
-
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
+<div class="row row-cols-1 row-cols-md-6">
+    <div class="col mb-2 mx-auto">
+        <?php if ($this->facebook): ?>
+            <div class="card">
+                <h5 class="card-header">
+                    <i class="fab fa-facebook"></i> Facebook
+                </h5>
+                <div class="card-body">
+                    <img src="<?= $this->facebook['picture']['data']['url']; ?>" width="50px" class="card-img-top"/>
+                </div>
+                <div class="card-footer">
+                    <a href="<?=$this->url('dtl-admin/dtl-social/facebook/disconnect');?>" class="btn btn-block btn-info">
+                        Desconectar
+                    </a>    
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="card">
+                <h5 class="card-header">
+                    <i class="fab fa-facebook"></i> Facebook
+                </h5>
+                <div class="card-body">
+                    <?php echo $this->facebookSignInBtn()->render(); ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>

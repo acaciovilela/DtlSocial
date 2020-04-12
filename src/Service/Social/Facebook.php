@@ -3,6 +3,10 @@
 namespace DtlSocial\Service\Social;
 
 use DtlAuth\Service\RequestService;
+use Laminas\ServiceManager\ServiceManager;
+use DtlSocial\Entity\Facebook as FacebookEntity;
+use DtlSocial\Authentication\Adapters\FacebookAdapter;
+use DtlAuth\Service\OAuth2Service;
 
 class Facebook {
 
@@ -17,6 +21,96 @@ class Facebook {
      * @var RequestService
      */
     protected $request;
+
+    /**
+     *
+     * @var ServiceManager 
+     */
+    protected $serviceManager;
+
+    public function signIn(string $code) {
+
+        $sm = $this->getServiceManager();
+
+        $oauthService = new OAuth2Service($sm->get(FacebookAdapter::class));
+
+        $accessToken = $oauthService->getAccessToken($code);
+        
+        if (!key_exists('access_token', $accessToken)) {
+            return false;
+        }
+
+        /**
+         * Check Access Token
+         */
+        $app = $oauthService->getAccessToken('', ['grant_type' => 'client_credentials']);
+
+        $check = false;
+
+        if (key_exists('access_token', $app)) {
+            $check = $this->checkAccessToken($accessToken['access_token'], $app['access_token']);
+        }
+
+        if (is_array($check)) {
+            if (key_exists('data', $check)) {
+                $facebookId = $check['data']['user_id'];
+            }
+        }
+
+        /**
+         * Check if token belongs to profile of a connected user
+         */
+        $em = $sm->get('doctrine.entitymanager.orm_default');
+
+        $connected = $em->getRepository(FacebookEntity::class)
+                ->findOneBy(['facebookId' => $facebookId]);
+
+        if (!$connected) {
+            $authService = $sm->get(\Laminas\Authentication\AuthenticationService::class);
+            $identity = $authService->getIdentity();
+
+            $user = $em->getRepository(\DtlUser\Entity\User::class)
+                    ->find($identity->getId());
+
+            $facebook = new FacebookEntity();
+            $facebook->setAccessToken($accessToken['access_token']);
+            $facebook->setTokenType($accessToken['token_type']);
+
+            if (key_exists('expires_in', $accessToken)) {
+                $facebook->setExpiresIn($accessToken['expires_in']);
+            }
+
+            $facebook->setFacebookId($facebookId);
+            $facebook->setUser($user);
+            $em->persist($facebook);
+            $em->flush();
+        } else {
+            $connected->setAccessToken($accessToken['access_token']);
+            if (key_exists('expires_in', $accessToken)) {
+                $connected->setExpiresIn($accessToken['expires_in']);
+            }
+            $em->persist($connected);
+            $em->flush();
+        }
+        return true;
+    }
+    
+    public function revoke(FacebookEntity $facebook) {
+        if (!$facebook instanceof FacebookEntity) {
+            return false;
+        }
+        $uri = $this->configs['api_base_uri'] . $facebook->getFacebookId() . '/permissions';
+        $uri .= '?access_token=' . $facebook->getAccessToken();
+        $response = $this->getRequest()->request($uri, 'DELETE');
+        $revoke = $this->getRequest()->getJsonDecode($response);
+        if (key_exists('success', $revoke)) {
+            if ($revoke['success']) {
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 
     /**
      * 
@@ -39,12 +133,10 @@ class Facebook {
      * 
      * @param string $accessToken
      */
-    public function getUser(string $accessToken, string $userId = 'me') {
-        $uri = $this->configs['api_base_uri'] . $this->configs['api_version'] . '/' . $userId;
-        $uri .= '?fields=id,name,about,birthday,cover,email,gender,hometown';
-        $uri .= ',accounts,picture,permissions';
-        $uri .= ',posts{id,application,created_time,description,icon,is_published,link,message,object_id,picture,properties,shares,source,type,likes.limit(10000){picture,name},comments.limit(10000){from{picture,name},message},attachments,place}';
-        $uri .= '&access_token=' . $accessToken;
+    public function getProfile(FacebookEntity $facebook) {
+        $uri = $this->configs['api_base_uri'] . $this->configs['api_version'] . '/' . $facebook->getFacebookId();
+        $uri .= '?fields=id,name,email,accounts,picture';
+        $uri .= '&access_token=' . $facebook->getAccessToken();
         $response = $this->getRequest()->request($uri);
         return $this->getRequest()->getJsonDecode($response);
     }
@@ -64,6 +156,15 @@ class Facebook {
 
     public function setRequest(RequestService $request) {
         $this->request = $request;
+        return $this;
+    }
+
+    public function getServiceManager(): ServiceManager {
+        return $this->serviceManager;
+    }
+
+    public function setServiceManager(ServiceManager $serviceManager) {
+        $this->serviceManager = $serviceManager;
         return $this;
     }
 

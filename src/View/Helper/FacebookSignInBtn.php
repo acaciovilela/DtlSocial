@@ -16,7 +16,7 @@ class FacebookSignInBtn extends AbstractHelper {
         $btn = '<a href="' . $this->getOauthService()->getAuthorizationUrl() . '" ';
         $btn .= 'class="btn btn-primary btn-block">';
         $btn .= '<i class="fa fa-facebook-official"></i> ';
-        $btn .= 'Entre com Facebook';
+        $btn .= 'Conectar';
         $btn .= '</a';
         return $btn;
     }

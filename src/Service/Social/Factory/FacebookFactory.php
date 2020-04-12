@@ -13,6 +13,7 @@ class FacebookFactory implements FactoryInterface {
         $facebook = new Facebook();
         $facebook->setConfigs($container->get('config')['facebook']);
         $facebook->setRequest(new RequestService());
+        $facebook->setServiceManager($container);
         return $facebook;
     }
 

@@ -10,6 +10,8 @@ namespace DtlSocial;
 
 use DtlSocial\Controller\IndexController;
 use DtlSocial\Controller\Factory\IndexControllerFactory;
+use DtlSocial\Controller\FacebookController;
+use DtlSocial\Controller\Factory\FacebookControllerFactory;
 
 return [
     /**
@@ -21,11 +23,11 @@ return [
         /**
          * Facebook Client ID
          */
-        'client_id' => '2354348601273813',
+        'client_id' => '599484637301931',
         /**
          * Facebook Client Secret
          */
-        'client_secret' => '75107d8887315c4f2d790a4085ac0b45',
+        'client_secret' => '7ebe560133d9d5cda18fcbadc111d190',
         /**
          * Facebook Graph API base URI
          */
@@ -41,11 +43,12 @@ return [
         /**
          * Facebook scopes in authorize request
          */
-        'scope' => '',
+        'scope' => 'manage_pages',
     ],
     'controllers' => [
         'factories' => [
             IndexController::class => IndexControllerFactory::class,
+            FacebookController::class => FacebookControllerFactory::class,
         ],
     ],
     'router' => [
@@ -62,11 +65,54 @@ return [
                             ],
                         ],
                         'may_terminate' => true,
-                        'child_routes' => [],
+                        'child_routes' => [
+                            'facebook' => [
+                                'type' => \Laminas\Router\Http\literal::class,
+                                'options' => [
+                                    'route' => '/facebook',
+                                    'defaults' => [
+                                        'controller' => FacebookController::class,
+                                        'action' => 'index',
+                                    ],
+                                ],
+                                'may_terminate' => true,
+                                'child_routes' => [
+                                    'oauth' => [
+                                        'type' => \Laminas\Router\Http\literal::class,
+                                        'options' => [
+                                            'route' => '/oauth',
+                                            'defaults' => [
+                                                'action' => 'oauth',
+                                            ],
+                                        ],
+                                    ],
+                                    'disconnect' => [
+                                        'type' => \Laminas\Router\Http\literal::class,
+                                        'options' => [
+                                            'route' => '/disconnect',
+                                            'defaults' => [
+                                                'action' => 'disconnect',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
                     ],
                 ],
             ],
         ],
+    ],
+    'access_filter' => [
+        'options' => [
+            'mode' => 'restrictive'
+        ],
+        'controllers' => [
+            Controller\IndexController::class => [
+                ['actions' => [], 'allow' => '*'],
+                ['actions' => ['index'], 'allow' => '@']
+            ],
+        ]
     ],
     'navigation' => [
         'default' => [
@@ -76,7 +122,13 @@ return [
                 'pages' => [
                     [
                         'label' => 'Redes Sociais',
-                        'route' => 'dtl-admin/dtl-social'
+                        'route' => 'dtl-admin/dtl-social',
+                        'pages' => [
+                            [
+                                'label' => 'Facebook',
+                                'route' => 'dtl-admin/dtl-social/facebook'
+                            ],
+                        ],
                     ],
                 ],
             ],

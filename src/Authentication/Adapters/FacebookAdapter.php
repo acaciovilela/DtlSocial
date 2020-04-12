@@ -114,7 +114,6 @@ class FacebookAdapter extends OAuth2AdapterAbstract implements OAuth2AdapterInte
         $params['client_id'] = $this->getClientId('client_id');
         $params['redirect_uri'] = $this->getRedirectUri('redirect_uri');
         $params['response_type'] = $this->getResponseType();
-        $params['auth_type'] = 'reauthenticate';
         if (!empty($this->getScopes())) {
             $params['scope'] = $this->getScopes();
         }
