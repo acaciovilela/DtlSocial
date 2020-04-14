@@ -36,43 +36,23 @@ class Google {
         $oauthService = new OAuth2Service($sm->get(GoogleAdapter::class));
 
         $accessToken = $oauthService->getAccessToken($code);
-        
+
         if (!key_exists('access_token', $accessToken)) {
             return false;
         }
 
         /**
-         * Check Access Token
-         */
-        $app = $oauthService->getAccessToken('', ['grant_type' => 'client_credentials']);
-
-        $check = false;
-
-        if (key_exists('access_token', $app)) {
-            $check = $this->checkAccessToken($accessToken['access_token'], $app['access_token']);
-        }
-
-        if (is_array($check)) {
-            if (key_exists('data', $check)) {
-                $idToken = $check['data']['id_token'];
-            }
-        }
-
-        /**
          * Check if token belongs to profile of a connected user
          */
+        $authService = $sm->get(\Laminas\Authentication\AuthenticationService::class);
+        $user = $authService->getIdentity();
+
         $em = $sm->get(\Doctrine\ORM\EntityManager::class);
 
         $connected = $em->getRepository(GoogleEntity::class)
-                ->findOneBy(['idToken' => $idToken]);
+                ->findOneBy(['user' => $user]);
 
         if (!$connected) {
-            $authService = $sm->get(\Laminas\Authentication\AuthenticationService::class);
-            $identity = $authService->getIdentity();
-
-            $user = $em->getRepository(\DtlUser\Entity\User::class)
-                    ->find($identity->getId());
-
             $google = new GoogleEntity();
             $google->setAccessToken($accessToken['access_token']);
             $google->setRefreshToken($accessToken['refresh_token']);
@@ -95,14 +75,15 @@ class Google {
         }
         return true;
     }
-    
+
     public function revoke(GoogleEntity $google) {
         if (!$google instanceof GoogleEntity) {
             return false;
         }
-        $uri = $this->configs['api_base_uri'] . $google->getGoogleId() . '/permissions';
-        $uri .= '?access_token=' . $google->getAccessToken();
-        $response = $this->getRequest()->request($uri, 'DELETE');
+        $uri = $this->configs['api_token_uri'] . '/revoke';
+        $uri .= '?token=' . $google->getAccessToken();
+        $this->getRequest()->setHeaders(['Content-Length: 0']);
+        $response = $this->getRequest()->request($uri, 'POST');
         $revoke = $this->getRequest()->getJsonDecode($response);
         if (key_exists('success', $revoke)) {
             if ($revoke['success']) {
@@ -128,21 +109,21 @@ class Google {
         $response = $this->getRequest()->request($uri, 'GET', $params);
         return $this->getRequest()->getJsonDecode($response);
     }
-    
+
     /**
      * 
      * @param GoogleEntity $google
      * @return boolean|GoogleEntity
      */
     public function refreshToken(GoogleEntity $google) {
+
         if (isset($google) && ($google instanceof GoogleEntity)) {
             $sm = $this->getServiceManager();
             $oauthService = new OAuth2Service($sm->get(GoogleAdapter::class));
-            $refresh = $oauthService->getRefreshToken($google->getAccessToken());
+            $refresh = $oauthService->getRefreshToken($google->getRefreshToken());
             if (key_exists('access_token', $refresh)) {
                 $google->setAccessToken($refresh['access_token']);
                 $google->setExpiresIn($refresh['expires_in']);
-                $google->setRefreshToken($refresh['refresh_token']);
                 $em = $sm->get(\Doctrine\ORM\EntityManager::class);
                 $em->persist($google);
                 $em->flush();
@@ -174,12 +155,11 @@ class Google {
         }
         return $this->getRequest()->getJsonDecode($response);
     }
-    
+
     private function errorHandler(Response $response) {
-        var_dump($response->getBody());
         throw new \Exception($response->getReasonPhrase());
     }
-    
+
     public function getConfigs() {
         return $this->configs;
     }

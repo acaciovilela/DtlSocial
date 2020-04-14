@@ -30,16 +30,16 @@ class GoogleController extends AbstractActionController {
 
     public function indexAction() {
         $user = $this->identity();
-        
+
         $google = $this->getEntityManager()->getRepository(GoogleEntity::class)
                 ->findOneBy(['user' => $user]);
-        
+
         if ($google) {
             $profile = $this->getGoogleService()->getProfile($google);
         } else {
             $profile = false;
         }
-        
+
         return new ViewModel([
             'profile' => $profile,
         ]);
@@ -53,26 +53,28 @@ class GoogleController extends AbstractActionController {
         }
 
         $signIn = $this->getGoogleService()->signIn($code);
-        
+
         if (!$signIn) {
             return $this->redirect()->toRoute('dtl-admin/dtl-social');
         }
 
         return $this->redirect()->toRoute('dtl-admin/dtl-social/google');
     }
-    
+
     public function disconnectAction() {
         $user = $this->identity();
-        
+
         $google = $this->getEntityManager()->getRepository(GoogleEntity::class)
                 ->findOneBy(['user' => $user]);
-        
-        if ($google) { 
-            $this->getEntityManager()->remove($google);
-            $this->getEntityManager()->flush();
-            $this->getGoogleService()->revoke($google);
+
+        if ($google) {
+            $revoke = $this->getGoogleService()->revoke($google);
+            if ($revoke) {
+                $this->getEntityManager()->remove($google);
+                $this->getEntityManager()->flush();
+            }
         }
-        
+
         return $this->redirect()->toRoute('dtl-admin/dtl-social');
     }
 

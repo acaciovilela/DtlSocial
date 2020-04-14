@@ -109,10 +109,10 @@ class GoogleAdapter extends OAuth2AdapterAbstract implements OAuth2AdapterInterf
      */
     public function getRefreshTokenParameters(string $token) {
         $params = [];
-        $params['grant_type'] = 'fb_exchange_token';
+        $params['grant_type'] = 'refresh_token';
         $params['client_id'] = $this->getConfigByKey('client_id');
         $params['client_secret'] = $this->getConfigByKey('client_secret');
-        $params['fb_exchange_token'] = $token;
+        $params['refresh_token'] = $token;
         return $params;
     }
 
