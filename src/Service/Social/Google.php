@@ -45,14 +45,17 @@ class Google {
          * Check if token belongs to profile of a connected user
          */
         $authService = $sm->get(\Laminas\Authentication\AuthenticationService::class);
-        $user = $authService->getIdentity();
-
+        $identity = $authService->getIdentity();
+        
         $em = $sm->get(\Doctrine\ORM\EntityManager::class);
 
         $connected = $em->getRepository(GoogleEntity::class)
-                ->findOneBy(['user' => $user]);
+                ->findOneBy(['user' => $identity]);
 
         if (!$connected) {
+            $user = $em->getRepository(\DtlUser\Entity\User::class)
+                    ->find($identity->getId());
+            
             $google = new GoogleEntity();
             $google->setAccessToken($accessToken['access_token']);
             $google->setRefreshToken($accessToken['refresh_token']);

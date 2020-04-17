@@ -44,7 +44,7 @@ class Facebook {
     protected $facebookId;
 
     /**
-     * @ORM\ManyToOne(targetEntity="DtlUser\Entity\User", cascade={"persist", "remove"})
+     * @ORM\ManyToOne(targetEntity="DtlUser\Entity\User", cascade={"persist"})
      * @var User
      */
     protected $user;
